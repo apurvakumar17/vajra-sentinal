@@ -18,6 +18,9 @@ class EmployeeBase(BaseModel):
     photo_url: Optional[str] = None
     current_risk_score: Optional[int] = 0
 
+class EmployeeCreate(EmployeeBase):
+    pass
+
 class EmployeeResponse(EmployeeBase):
     id: str
     risk_score: int = 0

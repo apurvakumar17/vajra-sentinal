@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { api } from '../api/client'
-import { MonitorSmartphone, Shield, Command, Power, LogOut, TerminalSquare, Activity } from 'lucide-react'
+import { MonitorSmartphone, Shield, Command, Power, LogOut, TerminalSquare, Activity, Download } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -22,13 +22,22 @@ export default function Endpoints() {
     <div className="animate-in fade-in duration-500 max-w-[1600px] mx-auto" data-testid="endpoints-page">
       <div className="flex justify-between items-center mb-8 border-b border-border pb-4">
         <h1 className="text-3xl font-bold tracking-tight text-text-primary">Endpoint Management</h1>
-        <button 
-          onClick={() => refetch()} 
-          className="bg-surface border border-border hover:border-[#D4D2CC] hover:bg-sidebar text-text-primary px-4 py-2 rounded-lg font-bold transition-colors flex items-center gap-2 shadow-sm"
-          data-testid="endpoints-refresh-btn"
-        >
-          <Activity size={18}/> Refresh Status
-        </button>
+        <div className="flex gap-3">
+          <a 
+            href="/sentinel-agent.zip" 
+            download
+            className="bg-primary hover:bg-primary-hover text-primary-text px-4 py-2 rounded-lg font-bold transition-colors flex items-center gap-2 shadow-sm"
+          >
+            <Download size={18}/> Download Agent
+          </a>
+          <button 
+            onClick={() => refetch()} 
+            className="bg-surface border border-border hover:border-[#D4D2CC] hover:bg-sidebar text-text-primary px-4 py-2 rounded-lg font-bold transition-colors flex items-center gap-2 shadow-sm"
+            data-testid="endpoints-refresh-btn"
+          >
+            <Activity size={18}/> Refresh Status
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">

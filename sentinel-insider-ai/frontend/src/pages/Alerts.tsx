@@ -16,36 +16,38 @@ export default function Alerts() {
   }
 
   return (
-    <div className="animate-in fade-in duration-500">
-      <h1 className="text-3xl font-bold mb-8">Incident Response</h1>
+    <div className="animate-in fade-in duration-500 max-w-[1600px] mx-auto" data-testid="alerts-page">
+      <div className="flex justify-between items-center mb-8 border-b border-border pb-4">
+        <h1 className="text-3xl font-bold tracking-tight text-text-primary">Incident Response</h1>
+      </div>
       
-      <div className="bg-dark border border-accent/50 p-6 rounded-2xl relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-1 h-full bg-accent"></div>
+      <div className="bg-surface border border-border p-6 rounded-lg relative overflow-hidden shadow-sm" data-testid="incident-card">
+        <div className="absolute top-0 left-0 w-1 h-full bg-[#D15C43]"></div>
         
         <div className="flex justify-between items-start mb-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <ShieldAlert className="text-accent" size={28} />
-              <h2 className="text-2xl font-bold text-white">Mass Exfiltration Detected</h2>
-              <span className="bg-accent/20 text-accent px-3 py-1 rounded-full text-sm font-semibold border border-accent/30">
+              <ShieldAlert className="text-[#D15C43]" size={28} />
+              <h2 className="text-2xl font-bold text-text-primary">Mass Exfiltration Detected</h2>
+              <span className="bg-[#D15C43]/10 text-[#D15C43] px-3 py-1 rounded-full text-sm font-bold border border-[#D15C43]/20 uppercase tracking-wide">
                 CRITICAL - Score: 85
               </span>
             </div>
-            <p className="text-slate-400">Target: {alertData.user} • Time: {alertData.time}</p>
+            <p className="text-text-secondary font-medium">Target: <span className="text-text-primary font-bold">{alertData.user}</span> â€¢ Time: {alertData.time}</p>
           </div>
           
           <div className="flex gap-3">
-            <button className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg font-medium transition-colors border border-slate-700">
+            <button className="bg-surface border border-border hover:border-[#D4D2CC] hover:bg-sidebar text-text-primary px-4 py-2 rounded-lg font-bold transition-colors shadow-sm" data-testid="btn-lock-workstation">
               Lock Workstation
             </button>
-            <button className="bg-accent hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+            <button className="bg-[#D15C43] hover:bg-[#B84D35] text-white px-4 py-2 rounded-lg font-bold transition-colors shadow-sm" data-testid="btn-isolate-endpoint">
               Isolate Endpoint
             </button>
           </div>
         </div>
 
         {/* Explainable AI Box */}
-        <div className="bg-slate-900 border border-primary/30 rounded-xl p-5 mb-6">
+        <div className="bg-background border border-border rounded-lg p-5 mb-2 shadow-inner" data-testid="ai-analysis-box">
           <div className="flex items-center gap-2 mb-4 text-primary">
             <BrainCircuit size={20} />
             <h3 className="font-bold text-lg">Gemini AI Analysis</h3>
@@ -53,22 +55,22 @@ export default function Alerts() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <p className="text-slate-400 text-sm mb-1">Reasoning</p>
-              <p className="text-slate-200">{alertData.ai_reasoning.Reason}</p>
+              <p className="overline-label mb-1">Reasoning</p>
+              <p className="text-text-primary">{alertData.ai_reasoning.Reason}</p>
             </div>
             <div>
-              <p className="text-slate-400 text-sm mb-1">Evidence</p>
-              <p className="text-slate-200 font-mono text-sm">{alertData.ai_reasoning.Evidence}</p>
+              <p className="overline-label mb-1">Evidence</p>
+              <p className="text-text-primary font-mono text-sm bg-surface p-2 rounded border border-border">{alertData.ai_reasoning.Evidence}</p>
             </div>
             <div>
-              <p className="text-slate-400 text-sm mb-1">MITRE ATT&CK</p>
-              <p className="text-blue-400 font-mono text-sm flex items-center gap-2">
+              <p className="overline-label mb-1">MITRE ATT&CK</p>
+              <p className="text-primary font-mono text-sm flex items-center gap-2 font-bold cursor-pointer hover:underline">
                 {alertData.ai_reasoning.MITRE} <ExternalLink size={14} />
               </p>
             </div>
             <div>
-              <p className="text-slate-400 text-sm mb-1">Confidence</p>
-              <p className="text-green-400 font-bold">{alertData.ai_reasoning.Confidence}</p>
+              <p className="overline-label mb-1">Confidence</p>
+              <p className="text-success font-bold text-lg">{alertData.ai_reasoning.Confidence}</p>
             </div>
           </div>
         </div>
