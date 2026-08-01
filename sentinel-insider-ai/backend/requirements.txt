@@ -1,0 +1,13 @@
+fastapi[all]
+motor
+pymongo
+redis
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt==3.2.0
+pydantic
+pydantic-settings
+uvicorn
+scikit-learn
+numpy
+google-generativeai
