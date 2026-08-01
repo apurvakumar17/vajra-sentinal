@@ -56,16 +56,18 @@ async def setup_database():
     admin_user = {
         "email": "admin@sentinel.ai",
         "hashed_password": get_password_hash("admin"),
-        "role": "SOC_Analyst",
-        "department": "Security"
+        "role": "SOC Analyst",
+        "department": "Security",
+        "full_name": "Admin User",
+        "photo_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=Admin"
     }
     user_res = await db.users.insert_one(admin_user)
 
     # 2. Employees
     employees = [
-        {"full_name": "Alice Smith", "department": "Finance", "current_risk_score": 15, "baseline_profile": {"working_hours": "09:00-17:00", "avg_daily_downloads": 5}},
-        {"full_name": "Bob Jones", "department": "HR", "current_risk_score": 25, "baseline_profile": {"working_hours": "08:30-16:30", "avg_daily_downloads": 2}},
-        {"full_name": "Rahul Sharma", "department": "Engineering", "current_risk_score": 85, "baseline_profile": {"working_hours": "10:00-19:00", "avg_daily_downloads": 50}},
+        {"full_name": "Alice Smith", "department": "Finance", "role": "Financial Analyst", "photo_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=Alice", "current_risk_score": 15, "baseline_profile": {"working_hours": "09:00-17:00", "avg_daily_downloads": 5}},
+        {"full_name": "Bob Jones", "department": "HR", "role": "HR Manager", "photo_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=Bob", "current_risk_score": 25, "baseline_profile": {"working_hours": "08:30-16:30", "avg_daily_downloads": 2}},
+        {"full_name": "Rahul Sharma", "department": "Engineering", "role": "Software Engineer", "photo_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=Rahul", "current_risk_score": 85, "baseline_profile": {"working_hours": "10:00-19:00", "avg_daily_downloads": 50}},
     ]
     emp_res = await db.employees.insert_many(employees)
     emp_ids = emp_res.inserted_ids

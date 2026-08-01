@@ -10,14 +10,16 @@ class Token(BaseModel):
     token_type: str
 
 class EmployeeBase(BaseModel):
-    email: EmailStr
+    email: Optional[str] = None
     full_name: str
     department: str
     role: str
     is_active: bool = True
+    photo_url: Optional[str] = None
+    current_risk_score: Optional[int] = 0
 
 class EmployeeResponse(EmployeeBase):
     id: str
-    risk_score: int
+    risk_score: int = 0
     device_id: Optional[str] = None
     manager: Optional[str] = None

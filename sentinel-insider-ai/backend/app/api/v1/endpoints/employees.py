@@ -9,6 +9,8 @@ router = APIRouter()
 
 def serialize_mongo_doc(doc):
     doc["id"] = str(doc["_id"])
+    if "current_risk_score" in doc:
+        doc["risk_score"] = doc["current_risk_score"]
     del doc["_id"]
     return doc
 

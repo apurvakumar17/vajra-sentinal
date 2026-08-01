@@ -30,79 +30,91 @@ export default function Dashboard() {
     { time: '16:00', risk: avgRisk || 85 }, // Use avg risk as latest
   ]
 
+  const cardClass = "bg-surface border border-border p-6 rounded-lg shadow-sm hover:-translate-y-0.5 hover:shadow-md hover:border-[#D4D2CC] transition-all duration-200 flex items-center gap-4"
+
   return (
     <div className="animate-in fade-in duration-500">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Security Overview</h1>
-        <button className="bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+      <div className="flex justify-between items-center mb-8 border-b border-border pb-4">
+        <h1 className="text-3xl font-bold tracking-tight text-text-primary">Security Overview</h1>
+        <button 
+          className="bg-primary hover:bg-primary-hover text-primary-text px-4 py-2 rounded-lg font-bold shadow-sm transition-colors"
+          data-testid="export-report-btn"
+        >
           Export Report
         </button>
       </div>
       
       {/* Top Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-dark border border-slate-800 p-6 rounded-2xl flex items-center gap-4 hover:border-primary/50 transition-colors">
-          <div className="p-4 bg-primary/10 text-primary rounded-xl"><Users size={24} /></div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className={cardClass} data-testid="metric-card-endpoints">
+          <div className="p-4 bg-secondary/10 text-secondary rounded-lg"><Users size={24} /></div>
           <div>
-            <p className="text-slate-400 text-sm">Endpoints Online</p>
-            <p className="text-2xl font-bold">{onlineCount}</p>
+            <p className="overline-label">Endpoints Online</p>
+            <p className="text-2xl font-bold text-text-primary mt-1">{onlineCount}</p>
           </div>
         </div>
         
-        <div className="bg-dark border border-slate-800 p-6 rounded-2xl flex items-center gap-4 hover:border-accent/50 transition-colors">
-          <div className="p-4 bg-accent/10 text-accent rounded-xl"><ShieldAlert size={24} /></div>
+        <div className={cardClass} data-testid="metric-card-alerts">
+          <div className="p-4 bg-primary/10 text-primary rounded-lg"><ShieldAlert size={24} /></div>
           <div>
-            <p className="text-slate-400 text-sm">Critical Alerts</p>
-            <p className="text-2xl font-bold text-accent">{criticalAlerts}</p>
+            <p className="overline-label">Critical Alerts</p>
+            <p className="text-2xl font-bold text-primary mt-1">{criticalAlerts}</p>
           </div>
         </div>
 
-        <div className="bg-dark border border-slate-800 p-6 rounded-2xl flex items-center gap-4 hover:border-orange-500/50 transition-colors">
-          <div className="p-4 bg-orange-500/10 text-orange-500 rounded-xl"><Activity size={24} /></div>
+        <div className={cardClass} data-testid="metric-card-users">
+          <div className="p-4 bg-[#E06D53]/10 text-[#E06D53] rounded-lg"><Activity size={24} /></div>
           <div>
-            <p className="text-slate-400 text-sm">High Risk Users</p>
-            <p className="text-2xl font-bold text-orange-500">{highRiskUsers}</p>
+            <p className="overline-label">High Risk Users</p>
+            <p className="text-2xl font-bold text-[#E06D53] mt-1">{highRiskUsers}</p>
           </div>
         </div>
 
-        <div className="bg-dark border border-slate-800 p-6 rounded-2xl flex items-center gap-4 hover:border-green-500/50 transition-colors">
-          <div className="p-4 bg-green-500/10 text-green-500 rounded-xl"><ServerCrash size={24} /></div>
+        <div className={cardClass} data-testid="metric-card-risk">
+          <div className="p-4 bg-success-background text-success rounded-lg"><ServerCrash size={24} /></div>
           <div>
-            <p className="text-slate-400 text-sm">Avg Risk Score</p>
-            <p className="text-2xl font-bold text-green-500">{avgRisk}</p>
+            <p className="overline-label">Avg Risk Score</p>
+            <p className="text-2xl font-bold text-success mt-1">{avgRisk}</p>
           </div>
         </div>
       </div>
 
       {/* Charts section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-dark border border-slate-800 p-6 rounded-2xl">
-          <h3 className="text-lg font-semibold mb-4 text-slate-300">Organization Risk Trend</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-surface border border-border p-6 rounded-lg shadow-sm" data-testid="chart-container-risk">
+          <h3 className="text-xl font-bold mb-4 text-text-primary">Organization Risk Trend</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={riskTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis dataKey="time" stroke="#64748b" />
-                <YAxis stroke="#64748b" />
-                <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b' }} />
-                <Line type="monotone" dataKey="risk" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 8 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#EAE8E2" vertical={false} />
+                <XAxis dataKey="time" stroke="#5C5A56" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#5C5A56" fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#FFFFFF', borderColor: '#EAE8E2', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }} 
+                  itemStyle={{ color: '#1A1A1A' }}
+                />
+                <Line type="monotone" dataKey="risk" stroke="#E06D53" strokeWidth={3} dot={{ r: 4, fill: '#FFFFFF', stroke: '#E06D53', strokeWidth: 2 }} activeDot={{ r: 6 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="bg-dark border border-slate-800 p-6 rounded-2xl">
-          <h3 className="text-lg font-semibold mb-4 text-slate-300">Live AI Copilot Feed</h3>
-          <div className="bg-slate-900/50 rounded-lg p-4 h-64 overflow-y-auto border border-slate-800 font-mono text-sm">
-            <div className="text-slate-500 mb-2">Waiting for WebSocket events...</div>
+        <div className="bg-surface border border-border p-6 rounded-lg shadow-sm" data-testid="live-feed-container">
+          <h3 className="text-xl font-bold mb-4 text-text-primary">Live AI Copilot Feed</h3>
+          <div className="bg-background rounded-lg p-4 h-64 overflow-y-auto border border-border font-body text-sm shadow-inner">
+            {(!alerts || alerts.length === 0) && !wsData && (
+              <div className="text-text-disabled mb-2 italic">Waiting for telemetry events...</div>
+            )}
             {wsData && (
-               <div className="text-primary border-l-2 border-primary pl-2 mb-2 animate-in slide-in-from-left-2">
-                 [ALERT] {JSON.stringify(wsData)}
+               <div className="text-primary border-l-2 border-primary pl-3 mb-3 py-1 bg-surface rounded-r shadow-sm">
+                 <span className="font-bold text-xs mr-2">[LIVE]</span> {JSON.stringify(wsData)}
                </div>
             )}
             {alerts?.slice(0, 5).map((alert: any) => (
-              <div key={alert.id} className={`${alert.severity === 'Critical' ? 'text-accent border-accent' : 'text-orange-500 border-orange-500'} border-l-2 pl-2 mb-2`}>
-                [{alert.severity.toUpperCase()}] {alert.reason} - Score: {alert.confidence}
+              <div key={alert.id} className={`${alert.severity === 'Critical' ? 'text-primary border-primary' : 'text-[#D15C43] border-[#D15C43]'} border-l-2 pl-3 mb-3 py-2 bg-surface rounded-r shadow-sm flex flex-col gap-1`}>
+                <span className="font-bold text-xs tracking-wider uppercase">[{alert.severity}]</span> 
+                <span className="text-text-primary">{alert.reason}</span>
+                <span className="text-xs text-text-secondary font-medium mt-1">Confidence Score: {alert.confidence}</span>
               </div>
             ))}
           </div>
