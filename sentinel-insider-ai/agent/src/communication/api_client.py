@@ -34,6 +34,15 @@ def send_telemetry(events):
         print(f"[-] Connection error during telemetry: {e}")
 
 def poll_commands():
-    # In a real scenario, this would use WebSockets or long-polling.
-    # For MVP, we simulate an empty command queue.
+    try:
+        response = requests.get(f"{BACKEND_URL}/agents/{AGENT_ID}/commands", timeout=5)
+        if response.status_code == 200:
+            commands = response.json()
+            if commands:
+                print(f"[+] Received {len(commands)} commands.")
+            return commands
+        else:
+            print(f"[-] Command poll failed: {response.text}")
+    except Exception as e:
+        print(f"[-] Connection error during command polling: {e}")
     return []

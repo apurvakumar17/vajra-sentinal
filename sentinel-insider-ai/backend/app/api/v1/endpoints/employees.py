@@ -1,0 +1,39 @@
+from fastapi import APIRouter, Depends, HTTPException
+from typing import List
+from app.core.database import get_db
+from app.api.deps import get_current_user
+from app.schemas.user import EmployeeResponse
+from bson import ObjectId
+
+router = APIRouter()
+
+def serialize_mongo_doc(doc):
+    doc["id"] = str(doc["_id"])
+    del doc["_id"]
+    return doc
+
+@router.get("/", response_model=List[EmployeeResponse])
+async def get_employees(current_user: dict = Depends(get_current_user)):
+    db = get_db()
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database connection not initialized")
+    
+    employees = await db.employees.find().to_list(length=100)
+    return [serialize_mongo_doc(emp) for emp in employees]
+
+@router.get("/{employee_id}", response_model=EmployeeResponse)
+async def get_employee(employee_id: str, current_user: dict = Depends(get_current_user)):
+    db = get_db()
+    if db is None:
+        raise HTTPException(status_code=500, detail="Database connection not initialized")
+        
+    try:
+        obj_id = ObjectId(employee_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid employee ID format")
+        
+    employee = await db.employees.find_one({"_id": obj_id})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+        
+    return serialize_mongo_doc(employee)

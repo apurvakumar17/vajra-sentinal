@@ -1,33 +1,34 @@
 import { useState, useEffect } from 'react'
 import { Activity, ShieldAlert, Users, ServerCrash, Cpu, Network } from 'lucide-react'
 import { useWebSocket } from '../hooks/useWebSocket'
-import { apiClient } from '../api/client'
+import { api } from '../api/client'
+import { useQuery } from '@tanstack/react-query'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
 
 export default function Dashboard() {
-  const wsData = useWebSocket('ws://127.0.0.1:8000/ws/dashboard')
-  const [stats, setStats] = useState({ online: 0, critical: 0, highRisk: 0, avgRisk: 0 })
+  const wsData = useWebSocket('ws://127.0.0.1:8000/api/v1/ws/dashboard')
   
+  const { data: employees } = useQuery({ queryKey: ['employees'], queryFn: api.getEmployees })
+  const { data: alerts } = useQuery({ queryKey: ['alerts'], queryFn: api.getAlerts })
+  const { data: agents } = useQuery({ queryKey: ['agents'], queryFn: api.getAgents })
+  
+  const onlineCount = agents?.filter((a: any) => a.status === 'online').length || 0
+  const criticalAlerts = alerts?.filter((a: any) => a.severity === 'Critical' && a.status === 'open').length || 0
+  const highRiskUsers = employees?.filter((e: any) => e.risk_score > 60).length || 0
+  const avgRisk = employees?.length 
+    ? Math.round(employees.reduce((acc: number, curr: any) => acc + curr.risk_score, 0) / employees.length) 
+    : 0
+
   // Dummy graph data for MVP
   const riskTrend = [
     { time: '08:00', risk: 20 },
     { time: '10:00', risk: 22 },
     { time: '12:00', risk: 35 },
     { time: '14:00', risk: 40 },
-    { time: '16:00', risk: 85 }, // Anomaly spike
+    { time: '16:00', risk: avgRisk || 85 }, // Use avg risk as latest
   ]
-
-  useEffect(() => {
-    // In a real app, fetch from backend via React Query
-    setStats({
-      online: 3,
-      critical: 1,
-      highRisk: 1,
-      avgRisk: 41
-    })
-  }, [])
 
   return (
     <div className="animate-in fade-in duration-500">
@@ -43,8 +44,8 @@ export default function Dashboard() {
         <div className="bg-dark border border-slate-800 p-6 rounded-2xl flex items-center gap-4 hover:border-primary/50 transition-colors">
           <div className="p-4 bg-primary/10 text-primary rounded-xl"><Users size={24} /></div>
           <div>
-            <p className="text-slate-400 text-sm">Employees Online</p>
-            <p className="text-2xl font-bold">{stats.online}</p>
+            <p className="text-slate-400 text-sm">Endpoints Online</p>
+            <p className="text-2xl font-bold">{onlineCount}</p>
           </div>
         </div>
         
@@ -52,7 +53,7 @@ export default function Dashboard() {
           <div className="p-4 bg-accent/10 text-accent rounded-xl"><ShieldAlert size={24} /></div>
           <div>
             <p className="text-slate-400 text-sm">Critical Alerts</p>
-            <p className="text-2xl font-bold text-accent">{stats.critical}</p>
+            <p className="text-2xl font-bold text-accent">{criticalAlerts}</p>
           </div>
         </div>
 
@@ -60,7 +61,7 @@ export default function Dashboard() {
           <div className="p-4 bg-orange-500/10 text-orange-500 rounded-xl"><Activity size={24} /></div>
           <div>
             <p className="text-slate-400 text-sm">High Risk Users</p>
-            <p className="text-2xl font-bold text-orange-500">{stats.highRisk}</p>
+            <p className="text-2xl font-bold text-orange-500">{highRiskUsers}</p>
           </div>
         </div>
 
@@ -68,7 +69,7 @@ export default function Dashboard() {
           <div className="p-4 bg-green-500/10 text-green-500 rounded-xl"><ServerCrash size={24} /></div>
           <div>
             <p className="text-slate-400 text-sm">Avg Risk Score</p>
-            <p className="text-2xl font-bold text-green-500">{stats.avgRisk}</p>
+            <p className="text-2xl font-bold text-green-500">{avgRisk}</p>
           </div>
         </div>
       </div>
@@ -96,15 +97,14 @@ export default function Dashboard() {
             <div className="text-slate-500 mb-2">Waiting for WebSocket events...</div>
             {wsData && (
                <div className="text-primary border-l-2 border-primary pl-2 mb-2 animate-in slide-in-from-left-2">
-                 [ALERT] {wsData}
+                 [ALERT] {JSON.stringify(wsData)}
                </div>
             )}
-            <div className="text-accent border-l-2 border-accent pl-2 mb-2">
-              [CRITICAL] Rahul Sharma initiated mass file copy to KINGSTON_64GB. Score: 85.
-            </div>
-            <div className="text-slate-400 border-l-2 border-slate-700 pl-2 mb-2">
-              [INFO] Bob Jones logged in from WIN-HR-02.
-            </div>
+            {alerts?.slice(0, 5).map((alert: any) => (
+              <div key={alert.id} className={`${alert.severity === 'Critical' ? 'text-accent border-accent' : 'text-orange-500 border-orange-500'} border-l-2 pl-2 mb-2`}>
+                [{alert.severity.toUpperCase()}] {alert.reason} - Score: {alert.confidence}
+              </div>
+            ))}
           </div>
         </div>
       </div>
