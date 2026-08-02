@@ -1,6 +1,6 @@
 import { Outlet, NavLink } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
-import { Shield, Users, AlertTriangle, LogOut, TerminalSquare, MonitorSmartphone, Bot, Bell, Search, User } from 'lucide-react'
+import { Shield, Users, AlertTriangle, LogOut, TerminalSquare, MonitorSmartphone, Bot, Bell, Search, User, BarChart3, ShieldCheck, Settings } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../api/client'
 import { useState } from 'react'
@@ -9,6 +9,11 @@ export default function DashboardLayout() {
   const logout = useAuthStore(state => state.logout)
   const { data: user, isError } = useQuery({ queryKey: ['me'], queryFn: api.getMe, retry: 1 })
   const [showDropdown, setShowDropdown] = useState(false)
+
+  // Automatically logout if the token is invalid (API returns 401)
+  if (isError) {
+    logout()
+  }
 
   const navClass = ({ isActive }: { isActive: boolean }) => 
     `flex items-center gap-3 p-3 rounded-xl transition-all font-semibold ${
@@ -43,9 +48,21 @@ export default function DashboardLayout() {
             <MonitorSmartphone size={20} />
             <span>Endpoints</span>
           </NavLink>
+          <NavLink to="/reports" className={navClass} data-testid="sidebar-nav-reports">
+            <BarChart3 size={20} />
+            <span>Reports</span>
+          </NavLink>
+          <NavLink to="/policies" className={navClass} data-testid="sidebar-nav-policies">
+            <ShieldCheck size={20} />
+            <span>Policies</span>
+          </NavLink>
           <NavLink to="/copilot" className={navClass} data-testid="sidebar-nav-copilot">
             <Bot size={20} />
             <span>AI Copilot</span>
+          </NavLink>
+          <NavLink to="/settings" className={navClass} data-testid="sidebar-nav-settings">
+            <Settings size={20} />
+            <span>Settings</span>
           </NavLink>
         </nav>
         

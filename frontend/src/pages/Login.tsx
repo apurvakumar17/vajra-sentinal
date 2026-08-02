@@ -5,7 +5,7 @@ import { apiClient } from '../api/client'
 
 export default function Login() {
   const [email, setEmail] = useState('admin@sentinel.ai')
-  const [password, setPassword] = useState('admin')
+  const [password, setPassword] = useState('Admin@123')
   const setToken = useAuthStore(state => state.setToken)
   const [error, setError] = useState('')
 
@@ -13,16 +13,13 @@ export default function Login() {
     e.preventDefault()
     setError('')
     try {
-      const formData = new URLSearchParams()
-      formData.append('username', email)
-      formData.append('password', password)
-      
-      const res = await apiClient.post('/auth/login', formData, {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      const res = await apiClient.post('/auth/login', {
+        username: email,
+        password: password
       })
       setToken(res.data.access_token)
-    } catch (err) {
-      setError('Invalid credentials')
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Invalid credentials')
     }
   }
 

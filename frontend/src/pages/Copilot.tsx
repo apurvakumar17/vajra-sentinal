@@ -1,28 +1,31 @@
 import { useState } from 'react'
-import { Bot, Send, User } from 'lucide-react'
+import { Bot, Send, User, Loader2 } from 'lucide-react'
+import { api } from '../api/client'
 
 export default function Copilot() {
   const [messages, setMessages] = useState([
-    { role: 'assistant', text: 'Hello, I am your Sentinel AI Copilot. I can query our MongoDB and help you analyze alerts, risks, and endpoints. What would you like to investigate today?' }
+    { role: 'assistant', text: 'Hello, I am your Sentinel AI Copilot. I can query our backend and help you analyze alerts, risks, and endpoints. What would you like to investigate today?' }
   ])
   const [input, setInput] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSend = () => {
-    if (!input.trim()) return
-    const userMessage = { role: 'user', text: input }
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return
+    const prompt = input.trim()
+    const userMessage = { role: 'user', text: prompt }
+    
     setMessages(prev => [...prev, userMessage])
     setInput('')
+    setIsLoading(true)
     
-    // Simulate API call for MVP
-    setTimeout(() => {
-      let botResponse = "I have analyzed the database logs. Everything appears nominal."
-      if (input.toLowerCase().includes('rahul')) {
-        botResponse = "Rahul Sharma was flagged for a High Risk score of 85 due to mass file exfiltration (T1052.001) using an unauthorized USB drive (KINGSTON_64GB). I recommend isolating his workstation."
-      } else if (input.toLowerCase().includes('highest risk')) {
-        botResponse = "The employee with the highest risk score right now is Rahul Sharma (85), followed by Priya Singh (42)."
-      }
-      setMessages(prev => [...prev, { role: 'assistant', text: botResponse }])
-    }, 1500)
+    try {
+      const { response } = await api.askCopilot(prompt)
+      setMessages(prev => [...prev, { role: 'assistant', text: response }])
+    } catch (error) {
+      setMessages(prev => [...prev, { role: 'assistant', text: 'Sorry, I encountered an error communicating with the backend.' }])
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -76,10 +79,11 @@ export default function Copilot() {
             />
             <button 
               onClick={handleSend}
-              className="absolute right-2 p-2 bg-primary hover:bg-primary-hover text-primary-text rounded-md transition-colors shadow-sm"
+              disabled={isLoading}
+              className="absolute right-2 p-2 bg-primary hover:bg-primary-hover text-primary-text rounded-md transition-colors shadow-sm disabled:opacity-50"
               data-testid="chat-send-btn"
             >
-              <Send size={20} />
+              {isLoading ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
             </button>
           </div>
           <div className="text-center mt-3 text-xs text-text-disabled font-medium">

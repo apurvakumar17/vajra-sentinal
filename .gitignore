@@ -2,3 +2,4 @@ sentinel-insider-ai/frontend/node_modules/
 sentinel-insider-ai/.env
 
 sentinel-insider-ai/frontend/.env
+.env.example
