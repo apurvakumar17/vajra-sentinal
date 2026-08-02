@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 export function useWebSocket(url: string) {
   const [data, setData] = useState<any>(null)
+  const wsRef = useRef<WebSocket | null>(null)
+  const retryCount = useRef(0)
 
   useEffect(() => {
     let targetUrl = url
@@ -14,23 +16,45 @@ export function useWebSocket(url: string) {
       targetUrl = `${protocol}//${window.location.host}${path}`
     }
 
-    let ws: WebSocket | null = null;
-    try {
-      ws = new WebSocket(targetUrl)
+    let isSubscribed = true
 
-      ws.onmessage = (event) => {
-        try {
-          setData(JSON.parse(event.data))
-        } catch {
-          setData(event.data)
+    function connect() {
+      if (!isSubscribed) return
+      try {
+        const ws = new WebSocket(targetUrl)
+        wsRef.current = ws
+
+        ws.onopen = () => {
+          retryCount.current = 0
         }
+
+        ws.onmessage = (event) => {
+          try {
+            setData(JSON.parse(event.data))
+          } catch {
+            setData(event.data)
+          }
+        }
+
+        ws.onclose = () => {
+          if (isSubscribed) {
+            const timeout = Math.min(10000, 1000 * Math.pow(2, retryCount.current))
+            retryCount.current++
+            setTimeout(connect, timeout)
+          }
+        }
+      } catch (err) {
+        console.warn('WebSocket connection error:', err)
       }
-    } catch (err) {
-      console.warn('WebSocket connection error:', err)
     }
 
+    connect()
+
     return () => {
-      ws?.close()
+      isSubscribed = false
+      if (wsRef.current) {
+        wsRef.current.close()
+      }
     }
   }, [url])
 

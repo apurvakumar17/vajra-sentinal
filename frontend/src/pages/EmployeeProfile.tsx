@@ -34,6 +34,13 @@ export default function EmployeeProfile() {
     queryKey: ['alerts'], 
     queryFn: api.getAlerts 
   })
+  
+  const { data: telemetryData } = useQuery({
+    queryKey: ['telemetry', employee?.device?.id],
+    queryFn: () => api.getLiveTelemetry(employee?.device?.id!),
+    enabled: !!employee?.device?.id,
+    refetchInterval: 5000
+  })
 
   if (empLoading || alertsLoading) {
     return <div className="p-8 text-center text-text-disabled animate-pulse">Loading Employee Profile...</div>
@@ -523,58 +530,21 @@ export default function EmployeeProfile() {
               <Clock size={18} className="text-secondary" /> Activity Timeline
             </h3>
             <div className="relative pl-4 border-l-2 border-border space-y-6 mt-4">
-              
-              {openIncidents.length > 0 ? (
-                <>
-                  <div className="relative">
-                    <div className="absolute -left-[23px] top-1 h-3 w-3 rounded-full bg-border ring-4 ring-surface"></div>
-                    <p className="text-xs text-text-secondary mb-1">Just Now</p>
-                    <p className="text-sm font-bold text-text-primary">Analyst Response</p>
-                    <p className="text-xs text-text-secondary mt-1">Investigation opened by system.</p>
+              {telemetryData?.telemetry?.length > 0 ? (
+                telemetryData.telemetry.slice(0, 10).map((t: any, idx: number) => (
+                  <div key={t.id || idx} className="relative">
+                    <div className={`absolute -left-[23px] top-1 h-3 w-3 rounded-full ring-4 ring-surface ${['Critical', 'High'].includes(t.severity) ? 'bg-[#D15C43]' : 'bg-secondary'}`}></div>
+                    <p className="text-xs text-text-secondary mb-1">{new Date(t.timestamp).toLocaleTimeString()}</p>
+                    <p className="text-sm font-bold text-text-primary">{t.event_type.replace(/_/g, ' ')}</p>
+                    <p className="text-xs text-text-secondary mt-1">{t.description}</p>
                   </div>
-                  <div className="relative">
-                    <div className="absolute -left-[23px] top-1 h-3 w-3 rounded-full bg-primary ring-4 ring-surface"></div>
-                    <p className="text-xs text-text-secondary mb-1">2 mins ago</p>
-                    <p className="text-sm font-bold text-primary">Alert Generated</p>
-                    <p className="text-xs text-text-secondary mt-1">System flagged exfiltration behavior.</p>
-                  </div>
-                  <div className="relative">
-                    <div className="absolute -left-[23px] top-1 h-3 w-3 rounded-full bg-[#D15C43] ring-4 ring-surface"></div>
-                    <p className="text-xs text-text-secondary mb-1">5 mins ago</p>
-                    <p className="text-sm font-bold text-[#D15C43]">Large Upload</p>
-                    <p className="text-xs text-text-secondary mt-1">1.2GB data transferred to external IP.</p>
-                  </div>
-                  <div className="relative">
-                    <div className="absolute -left-[23px] top-1 h-3 w-3 rounded-full bg-border ring-4 ring-surface"></div>
-                    <p className="text-xs text-text-secondary mb-1">10 mins ago</p>
-                    <p className="text-sm font-bold text-text-primary">Files Copied</p>
-                    <p className="text-xs text-text-secondary mt-1">20 files copied to KINGSTON_64GB.</p>
-                  </div>
-                  <div className="relative">
-                    <div className="absolute -left-[23px] top-1 h-3 w-3 rounded-full bg-secondary ring-4 ring-surface"></div>
-                    <p className="text-xs text-text-secondary mb-1">12 mins ago</p>
-                    <p className="text-sm font-bold text-text-primary">Sensitive Folder Access</p>
-                    <p className="text-xs text-text-secondary mt-1">Accessed /SourceCode directory.</p>
-                  </div>
-                  <div className="relative">
-                    <div className="absolute -left-[23px] top-1 h-3 w-3 rounded-full bg-border ring-4 ring-surface"></div>
-                    <p className="text-xs text-text-secondary mb-1">15 mins ago</p>
-                    <p className="text-sm font-bold text-text-primary">USB Inserted</p>
-                    <p className="text-xs text-text-secondary mt-1">Unauthorized mass storage detected.</p>
-                  </div>
-                  <div className="relative">
-                    <div className="absolute -left-[23px] top-1 h-3 w-3 rounded-full bg-border ring-4 ring-surface"></div>
-                    <p className="text-xs text-text-secondary mb-1">4 hours ago</p>
-                    <p className="text-sm font-bold text-text-primary">Login</p>
-                    <p className="text-xs text-text-secondary mt-1">Interactive logon via Winlogon.</p>
-                  </div>
-                </>
+                ))
               ) : (
                 <div className="relative">
                    <div className="absolute -left-[23px] top-1 h-3 w-3 rounded-full bg-success ring-4 ring-surface"></div>
                    <p className="text-xs text-text-secondary mb-1">Today</p>
-                   <p className="text-sm font-bold text-text-primary">Normal Activity</p>
-                   <p className="text-xs text-text-secondary mt-1">No deviations from baseline recorded.</p>
+                   <p className="text-sm font-bold text-text-primary">No Activity</p>
+                   <p className="text-xs text-text-secondary mt-1">Waiting for telemetry from agent.</p>
                 </div>
               )}
             </div>

@@ -32,6 +32,7 @@ export const api = {
   updateIncidentStatus: (id: string, status: string) => apiClient.put(`/incidents/${id}/status`, { status }).then(res => res.data),
   
   getEndpoints: () => apiClient.get('/endpoints').then(res => res.data),
+  getLiveTelemetry: (deviceId: string) => apiClient.get(`/endpoint/live?device_id=${deviceId}`).then(res => res.data),
   sendCommand: (endpointId: string, command: any) => apiClient.post(`/endpoints/${endpointId}/command`, command).then(res => res.data),
   
   getPolicies: () => apiClient.get('/policies').then(res => res.data),

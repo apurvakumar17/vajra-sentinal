@@ -31,6 +31,9 @@ db = {
         {"id": "RPT-001", "title": "Weekly Insider Threat Summary", "generated_by": "System", "created_at": datetime.utcnow().isoformat()}
     ],
     "telemetry": [],
+    "tasks": [],
+    "task_results": [],
+    "risk_history": [],
     "audit_logs": []
 }
 

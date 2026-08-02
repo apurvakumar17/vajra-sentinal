@@ -18,3 +18,11 @@ class CopilotRequest(BaseModel):
 
 class IncidentStatusUpdate(BaseModel):
     status: str
+
+class AlertStatusUpdate(BaseModel):
+    status: str
+
+class EmployeeCreate(BaseModel):
+    full_name: str
+    department: str
+    role: str
