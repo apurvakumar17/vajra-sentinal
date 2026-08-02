@@ -10,7 +10,27 @@ export default function Endpoints() {
   
   const sendCommandMutation = useMutation({
     mutationFn: ({ agentId, command }: { agentId: string, command: any }) => api.sendCommand(agentId, command),
-    onSuccess: (data) => toast.success(data.message || 'Command queued successfully')
+    onMutate: () => {
+      const toastId = toast.loading('Initiating Quick Action...')
+      return { toastId }
+    },
+    onSuccess: (data, variables, context) => {
+      if (data.status === 'sent') {
+        toast.success('Task Dispatched', {
+          id: context?.toastId,
+          description: data.message || 'Command sent successfully.'
+        })
+      } else {
+        toast.warning('Task Queued', {
+          id: context?.toastId,
+          description: 'Endpoint is currently offline. Command queued and will execute when the agent reconnects.'
+        })
+      }
+    },
+    onError: (error: any, variables, context) => {
+      const msg = error?.response?.data?.detail || error.message || 'Failed to dispatch task'
+      toast.error('Action Failed', { id: context?.toastId, description: msg })
+    }
   })
 
   const handleCommand = (agentId: string, action: string) => {
@@ -46,7 +66,7 @@ export default function Endpoints() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {agents?.map((agent: any) => (
-          <div key={agent.id} className="bg-surface border border-border rounded-xl flex flex-col hover:border-[#D4D2CC] hover:shadow-md transition-all duration-200 overflow-hidden shadow-sm">
+          <div key={agent.id} onClick={() => navigate(`/endpoints/${agent.id}`)} className="cursor-pointer bg-surface border border-border rounded-xl flex flex-col hover:border-[#D4D2CC] hover:shadow-md transition-all duration-200 overflow-hidden shadow-sm">
             
             <div className="p-6 border-b border-border/50">
               <div className="flex justify-between items-start mb-2">

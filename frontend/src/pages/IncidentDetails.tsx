@@ -1,13 +1,18 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api/client'
 import { ArrowLeft, ShieldAlert, BrainCircuit, ExternalLink, Activity, TerminalSquare, Lock, LogOut, Clock, CheckCircle2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { useState } from 'react'
 
 export default function IncidentDetails() {
-  const { id } = useParams()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const { id } = useParams()
   
   const { data: incidents, isLoading } = useQuery({ queryKey: ['incidents'], queryFn: api.getIncidents })
+  const [noteInput, setNoteInput] = useState('')
+  const [assignInput, setAssignInput] = useState('')
   
   if (isLoading) return <div className="p-8 text-text-secondary">Loading...</div>
   
@@ -15,6 +20,63 @@ export default function IncidentDetails() {
   if (!incident) return <div className="p-8 text-center text-text-secondary">Incident not found.</div>
 
   const alert = incident.alert
+
+  const resolveMutation = useMutation({
+    mutationFn: () => api.updateIncidentStatus(incident.id, 'Resolved'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['incidents'] })
+      toast.success('Incident Resolved', { description: 'The incident has been marked as resolved.' })
+    },
+    onError: (err: any) => toast.error('Failed to resolve', { description: err.message })
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: (data: any) => api.updateIncident(incident.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['incidents'] })
+      toast.success('Incident Updated', { description: 'Changes saved successfully.' })
+    },
+    onError: (err: any) => toast.error('Failed to update', { description: err.message })
+  })
+
+  const handleRemoteAction = async (actionType: 'lock' | 'logout' | 'kill') => {
+    const agent = incident?.employee?.device
+    if (!agent) {
+      toast.error('Endpoint Agent Not Installed', {
+        description: 'Quick actions require the Sentinel Endpoint Agent to be installed.'
+      })
+      return
+    }
+
+    const toastId = toast.loading('Initiating Quick Action...')
+    try {
+      let res: any = null
+      let actionName = actionType === 'lock' ? 'Lock Workstation' : actionType === 'logout' ? 'Force Logout' : 'Kill Process'
+
+      if (actionType === 'lock') {
+        res = await api.lockWorkstation({ employee_id: incident.employee_id, device_id: agent.id })
+      } else if (actionType === 'logout') {
+        res = await api.forceLogout({ employee_id: incident.employee_id, device_id: agent.id })
+      } else {
+        res = await api.killProcess({ employee_id: incident.employee_id, device_id: agent.id })
+      }
+
+      if (res.status === 'sent') {
+        toast.success(`Task Dispatched: ${actionName}`, {
+          id: toastId,
+          description: `Dispatched immediately via WebSocket to ${agent.hostname}.`
+        })
+      } else {
+        toast.warning(`Task Queued: ${actionName}`, {
+          id: toastId,
+          description: `Endpoint is currently offline. Command queued and will execute when the agent reconnects.`
+        })
+      }
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail || err.message || 'Failed to dispatch task'
+      toast.error('Action Failed', { id: toastId, description: msg })
+    }
+  }
 
   return (
     <div className="animate-in fade-in duration-500 max-w-[1600px] mx-auto pb-12 space-y-6">
@@ -153,7 +215,21 @@ export default function IncidentDetails() {
               </div>
               <div className="flex justify-between items-center py-2 border-b border-border/50">
                 <span className="text-sm text-text-secondary">Assigned To</span>
-                <span className="text-sm font-bold text-text-primary">{incident.assigned_analyst}</span>
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="text" 
+                    defaultValue={incident.assigned_to || incident.assigned_analyst || ''}
+                    onChange={(e) => setAssignInput(e.target.value)}
+                    placeholder="Analyst Name"
+                    className="w-32 bg-background border border-border rounded px-2 py-1 text-xs text-text-primary focus:outline-none focus:border-primary"
+                  />
+                  <button 
+                    onClick={() => updateMutation.mutate({ assigned_to: assignInput })}
+                    className="px-2 py-1 bg-surface border border-border rounded text-xs font-bold text-text-secondary hover:text-text-primary transition-colors"
+                  >
+                    Save
+                  </button>
+                </div>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-border/50">
                 <span className="text-sm text-text-secondary">Created At</span>
@@ -162,6 +238,14 @@ export default function IncidentDetails() {
               <div className="flex justify-between items-center py-2">
                 <span className="text-sm text-text-secondary">Alert ID</span>
                 <span className="text-sm font-bold text-text-primary">{incident.alert_id}</span>
+              </div>
+              <div className="pt-2 flex flex-col gap-2 border-t border-border mt-2">
+                <span className="text-sm font-bold text-text-primary">Notes</span>
+                {incident.notes && <p className="text-sm text-text-primary bg-background p-3 rounded-lg border border-border">{incident.notes}</p>}
+                <div className="flex gap-2">
+                  <input type="text" value={noteInput} onChange={e => setNoteInput(e.target.value)} className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-primary" placeholder="Add a note..."/>
+                  <button onClick={() => { updateMutation.mutate({ notes: noteInput }); setNoteInput(''); }} className="px-4 py-2 bg-primary text-primary-text rounded-lg text-sm font-bold hover:bg-primary-hover transition-colors shadow-sm">Save</button>
+                </div>
               </div>
             </div>
           </div>
@@ -172,17 +256,30 @@ export default function IncidentDetails() {
               <TerminalSquare size={16} /> Remote Response
             </h3>
             <div className="space-y-2">
-              <button className="w-full text-left px-4 py-2.5 rounded-lg border border-border bg-surface hover:bg-background transition-colors text-sm font-medium flex items-center gap-3 shadow-sm text-text-primary">
+              <button 
+                onClick={() => handleRemoteAction('lock')}
+                className="w-full text-left px-4 py-2.5 rounded-lg border border-border bg-surface hover:bg-background transition-colors text-sm font-medium flex items-center gap-3 shadow-sm text-text-primary"
+              >
                 <Lock size={16} className="text-primary" /> Lock Workstation
               </button>
-              <button className="w-full text-left px-4 py-2.5 rounded-lg border border-border bg-surface hover:bg-background transition-colors text-sm font-medium flex items-center gap-3 shadow-sm text-text-primary">
+              <button 
+                onClick={() => handleRemoteAction('logout')}
+                className="w-full text-left px-4 py-2.5 rounded-lg border border-border bg-surface hover:bg-background transition-colors text-sm font-medium flex items-center gap-3 shadow-sm text-text-primary"
+              >
                 <LogOut size={16} className="text-[#D15C43]" /> Force Logout Session
               </button>
-              <button className="w-full text-left px-4 py-2.5 rounded-lg border border-border bg-surface hover:bg-background transition-colors text-sm font-medium flex items-center gap-3 shadow-sm text-text-primary">
+              <button 
+                onClick={() => handleRemoteAction('kill')}
+                className="w-full text-left px-4 py-2.5 rounded-lg border border-border bg-surface hover:bg-background transition-colors text-sm font-medium flex items-center gap-3 shadow-sm text-text-primary"
+              >
                 <Activity size={16} className="text-text-secondary" /> Kill Associated Process
               </button>
               <div className="pt-4 mt-4 border-t border-border">
-                <button className="w-full text-center px-4 py-2.5 rounded-lg border border-success/20 bg-success-background text-success hover:bg-success/20 transition-colors text-sm font-bold shadow-sm flex items-center justify-center gap-2">
+                <button 
+                  onClick={() => resolveMutation.mutate()}
+                  disabled={resolveMutation.isPending || incident.status === 'Resolved'}
+                  className="w-full disabled:opacity-50 text-center px-4 py-2.5 rounded-lg border border-success/20 bg-success-background text-success hover:bg-success/20 transition-colors text-sm font-bold shadow-sm flex items-center justify-center gap-2"
+                >
                   <CheckCircle2 size={16} /> Mark as Resolved
                 </button>
               </div>

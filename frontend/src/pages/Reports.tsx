@@ -1,9 +1,41 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api/client'
-import { BarChart3, Download, Calendar } from 'lucide-react'
+import { BarChart3, Download, Calendar, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { useState } from 'react'
 
 export default function Reports() {
+  const queryClient = useQueryClient()
   const { data: reports, isLoading } = useQuery({ queryKey: ['reports'], queryFn: api.getReports })
+  const [downloading, setDownloading] = useState<string | null>(null)
+  
+  const generateMutation = useMutation({
+    mutationFn: () => api.createReport({ title: `Incident Summary Report - ${new Date().toLocaleDateString()}` }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reports'] })
+      toast.success('Report Generated', { description: 'The new report is now available for download.' })
+    },
+    onError: (err: any) => toast.error('Failed to generate report', { description: err.message })
+  })
+
+  const handleDownload = async (reportId: string) => {
+    setDownloading(reportId)
+    try {
+      const blob = await api.downloadReport(reportId)
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${reportId}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (err: any) {
+      toast.error('Download Failed', { description: err.message || 'Could not download the report.' })
+    } finally {
+      setDownloading(null)
+    }
+  }
 
   if (isLoading) return <div className="p-8 text-text-disabled">Loading reports...</div>
 
@@ -14,8 +46,13 @@ export default function Reports() {
           <h1 className="text-3xl font-bold tracking-tight text-text-primary">Reports</h1>
           <p className="text-text-secondary mt-1">Generated analytical and compliance reports.</p>
         </div>
-        <button className="bg-surface border border-border hover:bg-background text-text-primary px-4 py-2 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2 text-sm">
-          <Calendar size={16} /> Generate New Report
+        <button 
+          onClick={() => generateMutation.mutate()}
+          disabled={generateMutation.isPending}
+          className="bg-surface border border-border hover:bg-background text-text-primary px-4 py-2 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2 text-sm disabled:opacity-50"
+        >
+          {generateMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Calendar size={16} />} 
+          Generate New Report
         </button>
       </div>
 
@@ -44,8 +81,13 @@ export default function Reports() {
                       {new Date(report.created_at).toLocaleDateString()}
                     </td>
                     <td className="p-4 text-right">
-                      <button className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
-                        <Download size={14} /> Download PDF
+                      <button 
+                        onClick={() => handleDownload(report.id)}
+                        disabled={downloading === report.id}
+                        className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline disabled:opacity-50"
+                      >
+                        {downloading === report.id ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} 
+                        Download PDF
                       </button>
                     </td>
                   </tr>

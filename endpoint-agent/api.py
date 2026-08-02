@@ -44,3 +44,12 @@ class APIClient:
         except Exception as e:
             logger.error(f"Failed to send heartbeat: {e}")
             return []
+
+    def send_task_result(self, payload):
+        url = f"{self.base_url}/agent/task/result"
+        try:
+            res = requests.post(url, headers=self.headers, json=payload, timeout=10)
+            return res.status_code == 200
+        except Exception as e:
+            logger.error(f"Failed to send task result: {e}")
+            return False

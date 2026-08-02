@@ -1,0 +1,68 @@
+--- frontend/src/pages/IncidentDetails.tsx
++++ frontend/src/pages/IncidentDetails.tsx
+@@ -7,12 +7,14 @@
+ export default function IncidentDetails() {
+   const navigate = useNavigate()
+   const queryClient = useQueryClient()
+   const { id } = useParams()
+   
+   const { data: incidents, isLoading } = useQuery({ queryKey: ['incidents'], queryFn: api.getIncidents })
++  const [noteInput, setNoteInput] = useState('')
++  const [assignInput, setAssignInput] = useState('')
+   
+   if (isLoading) return <div className="p-8 text-text-secondary">Loading...</div>
+   
+   const incident = incidents?.find((i: any) => i.id === id)
+   if (!incident) return <div className="p-8 text-center text-text-secondary">Incident not found.</div>
+ 
+@@ -23,6 +25,15 @@
+     onError: (err: any) => toast.error('Failed to resolve', { description: err.message })
+   })
+ 
++  const updateMutation = useMutation({
++    mutationFn: (data: any) => api.updateIncident(incident.id, data),
++    onSuccess: () => {
++      queryClient.invalidateQueries({ queryKey: ['incidents'] })
++      toast.success('Incident Updated', { description: 'Changes saved successfully.' })
++    },
++    onError: (err: any) => toast.error('Failed to update', { description: err.message })
++  })
++
+   const handleRemoteAction = async (actionType: 'lock' | 'logout' | 'kill') => {
+@@ -194,11 +205,37 @@
+                 <span className="text-sm uppercase tracking-wider font-bold text-text-disabled block mb-1">Assigned Analyst</span>
+-                <span className="text-sm font-bold text-text-primary">{incident.assigned_analyst}</span>
++                <div className="flex gap-2">
++                  <input 
++                    type="text" 
++                    defaultValue={incident.assigned_analyst || ''}
++                    onChange={(e) => setAssignInput(e.target.value)}
++                    placeholder="Analyst Name"
++                    className="flex-1 bg-background border border-border rounded px-2 py-1 text-sm text-text-primary"
++                  />
++                  <button 
++                    onClick={() => updateMutation.mutate({ assigned_to: assignInput })}
++                    className="px-2 py-1 bg-surface border border-border rounded text-xs font-bold text-text-secondary hover:text-text-primary"
++                  >
++                    Assign
++                  </button>
++                </div>
+               </div>
+               <div>
+                 <span className="text-sm uppercase tracking-wider font-bold text-text-disabled block mb-1">Status</span>
+                 <span className="text-sm font-bold capitalize text-text-primary">{incident.status}</span>
+               </div>
+               <div className="col-span-2">
+                 <span className="text-sm uppercase tracking-wider font-bold text-text-disabled block mb-1">Alert ID</span>
+                 <span className="text-sm font-bold text-text-primary">{incident.alert_id}</span>
+               </div>
++              <div className="col-span-2 mt-2">
++                <span className="text-sm uppercase tracking-wider font-bold text-text-disabled block mb-2">Notes</span>
++                {incident.notes && <p className="text-sm text-text-primary mb-2 bg-background p-2 rounded border border-border">{incident.notes}</p>}
++                <div className="flex gap-2">
++                  <input type="text" value={noteInput} onChange={e => setNoteInput(e.target.value)} className="flex-1 bg-background border border-border rounded px-2 py-1 text-sm text-text-primary" placeholder="Add a note..."/>
++                  <button onClick={() => { updateMutation.mutate({ notes: noteInput }); setNoteInput(''); }} className="px-3 py-1 bg-primary text-primary-text rounded text-xs font-bold hover:bg-primary-hover">Save</button>
++                </div>
++              </div>
+             </div>
+           </div>

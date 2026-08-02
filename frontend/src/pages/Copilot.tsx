@@ -1,5 +1,9 @@
 import { useState } from 'react'
 import { Bot, Send, User, Loader2 } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import rehypeHighlight from 'rehype-highlight'
+import 'highlight.js/styles/github-dark.css' // Or whatever theme we want, let's just pick one
 import { api } from '../api/client'
 
 export default function Copilot() {
@@ -21,8 +25,9 @@ export default function Copilot() {
     try {
       const { response } = await api.askCopilot(prompt)
       setMessages(prev => [...prev, { role: 'assistant', text: response }])
-    } catch (error) {
-      setMessages(prev => [...prev, { role: 'assistant', text: 'Sorry, I encountered an error communicating with the backend.' }])
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.detail || error?.response?.data?.response || error.message || 'Sorry, I encountered an error communicating with the backend.'
+      setMessages(prev => [...prev, { role: 'assistant', text: errorMessage }])
     } finally {
       setIsLoading(false)
     }
@@ -52,9 +57,60 @@ export default function Copilot() {
               <div className={`p-4 max-w-[80%] rounded-2xl shadow-sm ${
                 msg.role === 'user' 
                   ? 'bg-primary text-primary-text rounded-tr-sm' 
-                  : 'bg-surface text-text-primary rounded-tl-sm border border-border leading-relaxed'
+                  : 'bg-surface text-text-primary rounded-tl-sm border border-border leading-relaxed overflow-x-auto markdown-body'
               }`}>
-                {msg.text}
+                {msg.role === 'user' ? (
+                  <div className="whitespace-pre-wrap">{msg.text}</div>
+                ) : (
+                  <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:p-0">
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm]} 
+                      rehypePlugins={[rehypeHighlight]}
+                      components={{
+                        a: ({ node, ...props }) => <a {...props} className="text-primary hover:underline font-medium" target="_blank" rel="noopener noreferrer" />,
+                        p: ({ node, ...props }) => <p {...props} className="mb-4 last:mb-0" />,
+                        ul: ({ node, ...props }) => <ul {...props} className="list-disc pl-6 mb-4 last:mb-0 space-y-1" />,
+                        ol: ({ node, ...props }) => <ol {...props} className="list-decimal pl-6 mb-4 last:mb-0 space-y-1" />,
+                        li: ({ node, ...props }) => <li {...props} className="text-text-primary" />,
+                        h1: ({ node, ...props }) => <h1 {...props} className="text-2xl font-bold mb-4 mt-6 text-text-primary border-b border-border pb-2" />,
+                        h2: ({ node, ...props }) => <h2 {...props} className="text-xl font-bold mb-3 mt-5 text-text-primary" />,
+                        h3: ({ node, ...props }) => <h3 {...props} className="text-lg font-bold mb-2 mt-4 text-text-primary" />,
+                        hr: ({ node, ...props }) => <hr {...props} className="my-6 border-border" />,
+                        code: ({ node, inline, className, children, ...props }: any) => {
+                          const match = /language-(\w+)/.exec(className || '');
+                          return !inline ? (
+                            <div className="rounded-md overflow-hidden my-4 border border-border">
+                              <div className="bg-sidebar px-4 py-2 text-xs font-mono text-text-secondary flex justify-between items-center border-b border-border">
+                                {match ? match[1] : 'code'}
+                              </div>
+                              <pre className="p-4 bg-background overflow-x-auto text-sm">
+                                <code className={className} {...props}>
+                                  {children}
+                                </code>
+                              </pre>
+                            </div>
+                          ) : (
+                            <code className="bg-background text-primary border border-border rounded px-1.5 py-0.5 text-sm font-mono" {...props}>
+                              {children}
+                            </code>
+                          );
+                        },
+                        blockquote: ({ node, ...props }) => <blockquote {...props} className="border-l-4 border-primary pl-4 italic text-text-secondary my-4" />,
+                        table: ({ node, ...props }) => (
+                          <div className="overflow-x-auto my-4 border border-border rounded-lg">
+                            <table {...props} className="w-full text-left border-collapse text-sm" />
+                          </div>
+                        ),
+                        thead: ({ node, ...props }) => <thead {...props} className="bg-sidebar border-b border-border" />,
+                        th: ({ node, ...props }) => <th {...props} className="p-3 font-semibold text-text-secondary uppercase tracking-wider text-xs" />,
+                        td: ({ node, ...props }) => <td {...props} className="p-3 border-b border-border/50 text-text-primary" />,
+                        tr: ({ node, ...props }) => <tr {...props} className="hover:bg-background/50 transition-colors" />
+                      }}
+                    >
+                      {msg.text}
+                    </ReactMarkdown>
+                  </div>
+                )}
               </div>
 
               {msg.role === 'user' && (
@@ -64,6 +120,18 @@ export default function Copilot() {
               )}
             </div>
           ))}
+          {isLoading && (
+            <div className="flex gap-4" data-testid="message-loading">
+              <div className="w-10 h-10 rounded-full bg-secondary/10 border border-secondary/20 text-secondary flex items-center justify-center shrink-0 shadow-sm">
+                <Bot size={20} />
+              </div>
+              <div className="p-4 max-w-[80%] rounded-2xl shadow-sm bg-surface text-text-primary rounded-tl-sm border border-border flex items-center justify-center gap-2">
+                <span className="w-2 h-2 bg-text-secondary rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                <span className="w-2 h-2 bg-text-secondary rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                <span className="w-2 h-2 bg-text-secondary rounded-full animate-bounce"></span>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="p-4 bg-sidebar border-t border-border z-10 shrink-0">

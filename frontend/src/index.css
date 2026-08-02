@@ -70,3 +70,18 @@
     font-weight: 700;
   }
 }
+
+/* Global Toast Overrides */
+[data-sonner-toaster] {
+  z-index: 99999 !important;
+}
+
+@media (max-width: 768px) {
+  [data-sonner-toaster][data-y-position="top"] {
+    top: 20px !important;
+    right: 50% !important;
+    transform: translateX(50%) !important;
+    width: max-content !important;
+    max-width: 90vw !important;
+  }
+}

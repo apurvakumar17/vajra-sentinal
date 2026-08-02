@@ -1,9 +1,10 @@
 import { Outlet, NavLink } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
-import { Shield, Users, AlertTriangle, LogOut, TerminalSquare, MonitorSmartphone, Bot, Bell, Search, User, BarChart3, ShieldCheck, Settings } from 'lucide-react'
+import { Shield, Users, AlertTriangle, LogOut, TerminalSquare, MonitorSmartphone, Bot, Search, User, BarChart3, ShieldCheck, Settings } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../api/client'
 import { useState } from 'react'
+import NotificationCenter from './NotificationCenter'
 
 export default function DashboardLayout() {
   const logout = useAuthStore(state => state.logout)
@@ -94,12 +95,10 @@ export default function DashboardLayout() {
           </div>
           
           <div className="flex items-center gap-6">
-            <button className="relative text-text-secondary hover:text-primary transition-colors" data-testid="notifications-bell">
-              <Bell size={20} />
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-surface"></span>
-            </button>
+            <NotificationCenter />
             
             <div className="h-8 w-px bg-border"></div>
+
             
             <div className="relative">
               <div 

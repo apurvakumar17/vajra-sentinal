@@ -2,6 +2,7 @@ import { Suspense, lazy } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
 import DashboardLayout from './components/DashboardLayout'
+import { Toaster } from 'sonner'
 
 const Login = lazy(() => import('./pages/Login'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
@@ -9,6 +10,7 @@ const Alerts = lazy(() => import('./pages/Alerts'))
 const Employees = lazy(() => import('./pages/Employees'))
 const EmployeeProfile = lazy(() => import('./pages/EmployeeProfile'))
 const Endpoints = lazy(() => import('./pages/Endpoints'))
+const EndpointDetails = lazy(() => import('./pages/EndpointDetails'))
 const Reports = lazy(() => import('./pages/Reports'))
 const Policies = lazy(() => import('./pages/Policies'))
 const Settings = lazy(() => import('./pages/Settings'))
@@ -19,8 +21,19 @@ function App() {
   const token = useAuthStore(state => state.token)
 
   return (
-    <Suspense fallback={<div className="p-8 text-center text-text-secondary">Loading...</div>}>
-      <Routes>
+    <>
+      <Toaster 
+        position="top-right" 
+        richColors 
+        duration={4000}
+        closeButton
+        offset="20px"
+        toastOptions={{
+          className: 'global-toast'
+        }}
+      />
+      <Suspense fallback={<div className="p-8 text-center text-text-secondary">Loading...</div>}>
+        <Routes>
         <Route path="/login" element={!token ? <Login /> : <Navigate to="/" />} />
         
         {/* Protected Routes */}
@@ -31,6 +44,7 @@ function App() {
           <Route path="/employees" element={<Employees />} />
           <Route path="/employees/:id" element={<EmployeeProfile />} />
           <Route path="/endpoints" element={<Endpoints />} />
+          <Route path="/endpoints/:id" element={<EndpointDetails />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/policies" element={<Policies />} />
           <Route path="/copilot" element={<Copilot />} />
@@ -38,6 +52,7 @@ function App() {
         </Route>
       </Routes>
     </Suspense>
+    </>
   )
 }
 
